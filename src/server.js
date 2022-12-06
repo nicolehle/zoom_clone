@@ -8,12 +8,12 @@ import {handle} from "express/lib/router";
 const app = express();
 
 /* Auto Refresh Middleware */
-const liveServer = livereload.createServer({
-    exts:["js", "pug", "css"],
-    delay: 1000,
-});
-
-liveServer.watch(__dirname);
+// const liveServer = livereload.createServer({
+//     exts:["js", "pug", "css"],
+//     delay: 1000,
+// });
+//
+// liveServer.watch(__dirname);
 
 
 app.set("view engine", "pug");
@@ -32,3 +32,11 @@ const server = http.createServer(app);
 const wsServer = new webSocket.Server( { server } );
 
 server.listen(3000, handleListen);
+
+wsServer.on("connection", (socket) => {
+    console.log("Connected to the BROWSER");
+    socket.on("close", () => console.log("Disconnected from the BROWSER"));
+    socket.on("message", (message) => console.log(message.toString('utf8')));
+    socket.send("hello!");
+});
+
