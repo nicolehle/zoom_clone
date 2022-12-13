@@ -36,11 +36,21 @@ wsServer.on("connection", (socket) => {
     console.log("Connected to the BROWSER");
     socket.on("close", () => console.log("Disconnected from the BROWSER"));
     sockets.push(socket);
-    socket.on("message", (message) => {
-        const string = message.toString('utf-8');
-
-        sockets.forEach(aSocket => aSocket.send(string));
+    socket["nickname"] = "Anon";
+    socket.on("message", (msg) => {
+      const message = JSON.parse(msg);
+      switch(message.type) {
+          case "new_message":
+              sockets.forEach(aSocket =>
+                  aSocket.send(`${socket.nickname}: ${message.payload}`))
+          break;
+          case "nickname":
+              socket["nickname"] = message.payload;
+          break;
+      }
+        // sockets.forEach(aSocket => aSocket.send(message.payload));
     });
 });
 
 server.listen(3000, handleListen);
+
