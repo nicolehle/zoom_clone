@@ -30,13 +30,17 @@ const handleListen = () => console.log(`Listening on local port 3000`);
 
 const server = http.createServer(app);
 const wsServer = new webSocket.Server( { server } );
-
-server.listen(3000, handleListen);
+const sockets = [];
 
 wsServer.on("connection", (socket) => {
     console.log("Connected to the BROWSER");
     socket.on("close", () => console.log("Disconnected from the BROWSER"));
-    socket.on("message", (message) => console.log(message.toString('utf8')));
-    socket.send("hello!");
+    sockets.push(socket);
+    socket.on("message", (message) => {
+        const string = message.toString('utf-8');
+
+        sockets.forEach(aSocket => aSocket.send(string));
+    });
 });
 
+server.listen(3000, handleListen);
