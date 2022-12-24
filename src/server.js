@@ -1,6 +1,7 @@
 import express from "express";
 import webSocket from "ws";
 import http from "http";
+import SocketIO from "socket.io";
 import livereloadMiddleware from "connect-livereload";
 import livereload from "livereload";
 import {handle} from "express/lib/router";
@@ -28,29 +29,41 @@ app.get("/*", (req, res) => res.redirect("/"));
 
 const handleListen = () => console.log(`Listening on local port 3000`);
 
-const server = http.createServer(app);
-const wsServer = new webSocket.Server( { server } );
-const sockets = [];
+const httpServer = http.createServer(app);
+const ioServer = SocketIO(httpServer);
 
-wsServer.on("connection", (socket) => {
-    console.log("Connected to the BROWSER");
-    socket.on("close", () => console.log("Disconnected from the BROWSER"));
-    sockets.push(socket);
-    socket["nickname"] = "Anon";
-    socket.on("message", (msg) => {
-      const message = JSON.parse(msg);
-      switch(message.type) {
-          case "new_message":
-              sockets.forEach(aSocket =>
-                  aSocket.send(`${socket.nickname}: ${message.payload}`))
-          break;
-          case "nickname":
-              socket["nickname"] = message.payload;
-          break;
-      }
-        // sockets.forEach(aSocket => aSocket.send(message.payload));
+ioServer.on("connection", (socket) => {
+    socket.onAny((event) => {
+       console.log(`Socket Event: ${event}`);
     });
+    socket.on("enter_room", (roomName, done) => {
+        socket.join(roomName);
+        done();
+    })
 });
 
-server.listen(3000, handleListen);
+// const wsServer = new webSocket.Server( { server } );
+// const sockets = [];
+//
+// wsServer.on("connection", (socket) => {
+//     console.log("Connected to the BROWSER");
+//     socket.on("close", () => console.log("Disconnected from the BROWSER"));
+//     sockets.push(socket);
+//     socket["nickname"] = "Anon";
+//     socket.on("message", (msg) => {
+//       const message = JSON.parse(msg);
+//       switch(message.type) {
+//           case "new_message":
+//               sockets.forEach(aSocket =>
+//                   aSocket.send(`${socket.nickname}: ${message.payload}`))
+//           break;
+//           case "nickname":
+//               socket["nickname"] = message.payload;
+//           break;
+//       }
+//         // sockets.forEach(aSocket => aSocket.send(message.payload));
+//     });
+// });
+
+httpServer.listen(3000, handleListen);
 
